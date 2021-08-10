@@ -10,15 +10,13 @@ import torch
 mod_name = vars(sys.modules[__name__])['__name__']
 
 if 'adas.' in mod_name:
-    from .components import LayerMetrics, ConvLayerMetrics
     from .matrix_factorization import EVBMF
 else:
-    from optim.components import LayerMetrics, ConvLayerMetrics
     from optim.matrix_factorization import EVBMF
 
 
 class Metrics:
-    def __init__(self, params) -> None:
+    def __init__(self, params, MAX, S, measure) -> None:
         '''
         parameters: list of torch.nn.Module.parameters()
         '''
@@ -26,80 +24,105 @@ class Metrics:
         self.history = list()
         mask = list()
         #create mask
+        self.measure = measure
         self.mask = set(mask)
-
-    def __call__(self) -> List[Tuple[int, Union[LayerMetrics,
-                                                ConvLayerMetrics]]]:
-        '''
-        Computes the knowledge gain (S) and mapping condition (condition)
-        '''
-        metrics: List[Tuple[int, Union[LayerMetrics,
-                                       ConvLayerMetrics]]] = list()
+        self.MAX = MAX
+        self.len = S
+        self.weight_hist = list()
+        self.random_selection = list()
         for layer_index, layer in enumerate(self.params):
-            if layer_index in self.mask:
-                metrics.append((layer_index, None))
-                continue
-            # if np.less(np.prod(layer.shape), 10_000):
-            #     metrics.append((layer_index, None))
-            if len(layer.shape) == 4:
-                layer_tensor = layer.data
-                tensor_size = layer_tensor.shape
-                mode_3_unfold = layer_tensor.permute(1, 0, 2, 3)
-                mode_3_unfold = torch.reshape(
-                    mode_3_unfold, [tensor_size[1], tensor_size[0] *
-                                    tensor_size[2] * tensor_size[3]])
-                mode_4_unfold = layer_tensor
-                mode_4_unfold = torch.reshape(
-                    mode_4_unfold, [tensor_size[0], tensor_size[1] *
-                                    tensor_size[2] * tensor_size[3]])
-                in_rank, in_KG, in_condition = self.compute_low_rank(
-                    mode_3_unfold, tensor_size[1])
-                if in_rank is None and in_KG is None and in_condition is None:
-                    if len(self.history) > 0:
-                        in_rank = self.history[-1][
-                            layer_index][1].input_channel.rank
-                        in_KG = self.history[-1][
-                            layer_index][1].input_channel.KG
-                        in_condition = self.history[-1][
-                            layer_index][1].input_channel.condition
-                    else:
-                        in_rank = in_KG = in_condition = 0.
-                out_rank, out_KG, out_condition = self.compute_low_rank(
-                    mode_4_unfold, tensor_size[0])
-                if out_rank is None and out_KG is None and out_condition is None:
-                    if len(self.history) > 0:
-                        out_rank = self.history[-1][
-                            layer_index][1].output_channel.rank
-                        out_KG = self.history[-1][
-                            layer_index][1].output_channel.KG
-                        out_condition = self.history[-1][
-                            layer_index][1].output_channel.condition
-                    else:
-                        out_rank = out_KG = out_condition = 0.
-                metrics.append((layer_index, ConvLayerMetrics(
-                    input_channel=LayerMetrics(
-                        rank=in_rank,
-                        KG=in_KG,
-                        condition=in_condition),
-                    output_channel=LayerMetrics(
-                        rank=out_rank,
-                        KG=out_KG,
-                        condition=out_condition))))
-            elif len(layer.shape) == 2:
-                rank, KG, condition = self.compute_low_rank(
-                    layer, layer.shape[0])
-                if rank is None and KG is None and condition is None:
-                    if len(self.history) > 0:
-                        rank = self.history[-1][layer_index][1].rank
-                        KG = self.history[-1][layer_index][1].KG
-                        condition = self.history[-1][layer_index][1].condition
-                    else:
-                        rank = KG = condition = 0.
-                metrics.append((layer_index, LayerMetrics(
-                    rank=rank,
-                    KG=KG,
-                    condition=condition)))
+            self.weight_hist.append(0)
+            self.random_selection.append(0)
+            layer_tensor = layer.data
+            if(np.prod(layer_tensor.shape)>self.MAX):
+                self.random_selection[layer_index] = np.random.choice(np.prod(layer_tensor.shape)-1,size=self.MAX,replace=False)
+                self.weight_hist[layer_index]=np.empty((self.MAX,self.len))
             else:
-                metrics.append((layer_index, None))
-        self.history.append(metrics)
-        return metrics
+                self.weight_hist[layer_index]=np.empty((np.prod(layer_tensor.shape),self.len))
+
+    def __call__(self):
+        '''
+        Updates weight history
+        '''
+        for layer_index, layer in enumerate(self.params):
+            weight = layer.cpu().data
+            weight = torch.reshape(weight, [-1,1])
+            weight = np.append(weight, [[0,0,0,0,0]])
+            weight = np.expand_dims(weight,1)
+            weight = weight[:(self.weight_hist[layer_index].shape)[0],:]
+            if(weight.shape[0]>self.MAX):
+                weight = weight[self.random_selection[layer_index],:]
+            self.weight_hist[layer_index] = np.concatenate((self.weight_hist[layer_index], weight),axis=1)
+            self.weight_hist[layer_index] = self.weight_hist[layer_index][:,1:]    
+        return None
+
+    def update(self):
+        '''
+        returns metrics on recent window
+        '''
+        out = list()
+
+        for layer_index in range(len(self.weight_hist)):
+            #formattin, slicing
+            #can add the random selection stuff here, vert and horizontal
+            slice = self.weight_hist[layer_index][:,-self.len:]
+            slice_shape = slice.shape
+            if(slice_shape[0]>slice_shape[1]):
+                slice = slice.T
+                slice_shape = slice.shape
+            slice = torch.from_numpy(slice)
+            if("square" in self.measure):
+                slice = np.matmul(slice,slice.T)
+
+            if("cov" in self.measure):
+                #LRF
+                if("LRF" in self.measure):
+                    U_approx, S_approx, V_approx = EVBMF(slice)
+                    if(len(torch.diag(S_approx).data.numpy())!=0):
+                        low_slice = np.matmul(np.matmul(U_approx.data.numpy(),S_approx.data.numpy()),V_approx.data.numpy().T)
+                        low_rank_cov = np.cov(low_slice, rowvar=True)
+                        low_rank_eigen = np.linalg.eigvals(low_rank_cov)
+                        if("SR" in self.measure):
+                            out.append(np.sum(low_rank_eigen/np.max(low_rank_eigen))/slice_shape[0])
+                        elif("FN" in self.measure):
+                            out.append(np.sqrt(np.sum(low_rank_eigen**2)))
+                        elif("ER" in self.measure):
+                            out.append(-np.sum(np.multiply(low_rank_eigen/np.sum(low_rank_eigen),np.log(low_rank_eigen/np.sum(low_rank_eigen)))))
+                    else:
+                        out.append(0)
+                else:
+                    #raw
+                    slice = slice.data.numpy()
+                    cov = np.cov(slice, rowvar=True)
+                    eigen = np.linalg.eigvals(cov)
+                    if("SR" in self.measure):
+                        out.append(np.sum(eigen/np.max(eigen))/slice_shape[0])
+                    elif("FN" in self.measure):
+                        out.append(np.sqrt(np.sum(eigen**2)))
+                    elif("ER" in self.measure):
+                        out.append(-np.sum(np.multiply(eigen/np.sum(eigen),np.log(eigen/np.sum(eigen)))))
+            else:
+                #LRF
+                if("LRF" in self.measure):
+                    U_approx, S_approx, V_approx = EVBMF(slice)
+                    low_rank_eigen = torch.diag(S_approx).data.numpy()
+                    if(len(torch.diag(S_approx).data.numpy())!=0):
+                        if("SR" in self.measure):
+                            out.append(np.sum(low_rank_eigen/np.max(low_rank_eigen))/slice_shape[0])
+                        elif("FN" in self.measure):
+                            out.append(np.sqrt(np.sum(low_rank_eigen**2)))
+                        elif("ER" in self.measure):
+                            out.append(-np.sum(np.multiply(low_rank_eigen/np.sum(low_rank_eigen),np.log(low_rank_eigen/np.sum(low_rank_eigen)))))
+                    else:
+                        out.append(0)
+                else:
+                    #raw
+                    U, S, V = torch.svd(slice)
+                    eigen = S.data.numpy()
+                    if("SR" in self.measure):
+                        out.append(np.sum(eigen/np.max(eigen))/slice_shape[0])
+                    elif("FN" in self.measure):
+                        out.append(np.sqrt(np.sum(eigen**2)))
+                    elif("ER" in self.measure):
+                        out.append(-np.sum(np.multiply(eigen/np.sum(eigen),np.log(eigen/np.sum(eigen)))))
+        return np.array(out)

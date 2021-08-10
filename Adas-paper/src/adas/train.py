@@ -58,6 +58,7 @@ if 'adas.' in mod_name:
     from .optim.sps import SPS
     from .data import get_data
     from .optim.adas import Adas
+    from .optim.hrmsgd import HRMSGD
 else:
     from optim.lr_scheduler import CosineAnnealingWarmRestarts, StepLR, \
         OneCycleLR
@@ -73,6 +74,7 @@ else:
     from optim.sps import SPS
     from data import get_data
     from optim.adas import Adas
+    from optim.hrmsgd import HRMSGD
 
 
 def args(sub_parser: _SubParsersAction):
@@ -175,9 +177,6 @@ def args(sub_parser: _SubParsersAction):
     sub_parser.add_argument(
         '--MAX', default=10000000, type=int,
         help='max number of parameters extracted from a weight tensor')
-    sub_parser.add_argument(
-        '--savewindows', default=0, type=int,
-        help='save window history in a pickle')
 
 class TrainingAgent:
     config: Dict[str, Any] = None
@@ -228,8 +227,13 @@ class TrainingAgent:
         self.data_path = data_path
         self.output_path = output_path
         self.checkpoint_path = checkpoint_path
+        self.S = int(args.S)
+        self.J = float(args.J)
+        self.batch_stops = dict()
+        self.MAX = args.MAX
 
         self.load_config(config_path, data_path)
+        self.load_iterations()
         print("Adas: Experiment Configuration")
         print("-"*45)
         for k, v in self.config.items():
@@ -291,17 +295,14 @@ class TrainingAgent:
 
     def load_iterations(self):
         for i in range(len(self.train_loader)):
-            self.batch_stops[i] = []
+            self.batch_stops[i] = 0
         for s in self.S:
             for j in self.J:
-                encoding = "S" + str(s) + "_J" + str(j)
-                self.encodings.append(encoding)
                 index = s
                 if index>0:
                     while(index < len(self.train_loader)):
-                        #print(self.RMSGD_config['batch_index'][encoding][-1])
-                            self.batch_stops[index-1].append(encoding)
-                            index += int(j*s)
+                        self.batch_stops[index-1]=1
+                        index += int(j*s)
 
     def reset(self, learning_rate: float) -> None:
         self.performance_statistics = dict()
@@ -342,6 +343,10 @@ class TrainingAgent:
             train_loader_len=len(self.train_loader),
             mini_batch_size=self.config['mini_batch_size'],
             max_epochs=self.config['max_epochs'],
+            MAX = self.MAX,
+            S = self.S,
+            measure = self.measure,
+            saves = self.batch_stops,
             optimizer_kwargs=self.config['optimizer_kwargs'],
             scheduler_kwargs=self.config['scheduler_kwargs'])
         self.early_stop.reset()
@@ -501,6 +506,9 @@ class TrainingAgent:
                 #                         self.scheduler.lr_vector)
                 if isinstance(self.optimizer, SPS):
                     self.optimizer.step(loss=loss)
+                elif isinstance(self.optimizer, HRMSGD):
+                    self.optimizer.batch_update()
+                    self.optimizer.step()
                 else:
                     self.optimizer.step()
 

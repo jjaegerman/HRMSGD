@@ -52,6 +52,7 @@ if 'adas.' in mod_name:
     from .sgd import SGDVec
     from .adam import Adam
     from .sgd import SGD
+    from .hrmsgd import HRMSGD
     from .sps import SPS
     from .sls import SLS
     from .lrd import LRD
@@ -67,6 +68,7 @@ else:
     from optim.adadelta import Adadelta
     from optim.adagrad import Adagrad
     from optim.rmsprop import RMSprop
+    from optim.hrmsgd import HRMSGD
     from optim.nosadam import NosAdam
     from optim.laprop import LaProp
     from optim.adamod import AdaMod
@@ -94,8 +96,14 @@ def get_optimizer_scheduler(
         train_loader_len: int,
         mini_batch_size: int,
         max_epochs: int,
+        MAX: int,
+        S: int,
+        measure: str,
+        saves = dict(),
         optimizer_kwargs=dict(),
-        scheduler_kwargs=dict()) -> torch.nn.Module:
+        scheduler_kwargs=dict()
+        ) -> torch.nn.Module:
+
     optimizer = None
     scheduler = None
     optim_processed_kwargs = {
@@ -108,6 +116,17 @@ def get_optimizer_scheduler(
             listed_params=listed_params,
             lr=init_lr,
             **optim_processed_kwargs)
+    elif optim_method == "HRMSGD":
+        optimizer = HRMSGD(
+            params=net_parameters,
+            listed_params=listed_params,
+            lr=init_lr,
+            saves = saves,
+            MAX = MAX,
+            S = S,
+            measure = measure,
+            **optim_processed_kwargs
+        )
     elif optim_method == 'SGD':
         if 'momentum' not in optim_processed_kwargs.keys() or \
                 'weight_decay' not in optim_processed_kwargs.keys():

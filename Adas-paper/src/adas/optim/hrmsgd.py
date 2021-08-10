@@ -23,13 +23,18 @@ class HRMSGD(Optimizer):
     def __init__(self,
                  params,
                  listed_params,
+                 saves,
+                 MAX = 4000,
+                 S = 100,
+                 measure = "SQLRF",
                  lr: float = required,
-                 beta: float = 0,
-                 zeta: float = 1,
-                 momentum: float = 0,
-                 dampening: float = 0,
+                 beta: float = 0, #LR momentum
+                 zeta: float = 1, #LR dampening
+                 momentum: float = 0, #SGD momentum
+                 dampening: float = 0, #SGD dampening
                  weight_decay: float = 0,
-                 nesterov: bool = False):
+                 nesterov: bool = False
+                 ):
 
         if lr is not required and lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
@@ -50,48 +55,24 @@ class HRMSGD(Optimizer):
         if np.less(beta, 0) or np.greater_equal(beta, 1):
             raise ValueError(f'Invalid beta: {beta}')
         self.beta = beta
-        self.metrics = metrics = Metrics(params=listed_params)
+        self.metrics = metrics = Metrics(params=listed_params, MAX=MAX, S=S, measure=measure)
         self.lr_vector = np.repeat(a=lr, repeats=len(metrics.params))
-        self.velocity = np.zeros(
-            len(self.metrics.params) - len(self.metrics.mask))
         self.init_lr = lr
         self.zeta = zeta
+        self.saves = saves
+        self.start = 0
 
     def __setstate__(self, state):
         super(HRMSGD, self).__setstate__(state)
         for group in self.param_groups:
             group.setdefault('nesterov', False)
 
-    def epoch_step(self, epoch: int) -> None:
+    def batch_update(self, batch):
         self.metrics()
-        if epoch == 0:
-            velocity = self.init_lr * np.ones(len(self.velocity))
-            self.KG = self.metrics.KG(epoch)
-        else:
-            KG = self.metrics.KG(epoch)
-            velocity = KG - self.KG
-            self.KG = KG
-            for idx in self.not_ready:
-                if np.isclose(KG[idx], 0.):
-                    velocity[idx] = self.init_lr - \
-                        self.beta * self.velocity[idx]
-                else:
-                    self.not_ready.remove(idx)
+        if(self.saves[batch]):
+            measures = self.metrics.update()
+            self.lr_vector = self.lr_vector*self.beta + self.zeta*measures
 
-        if self.step_size is not None:
-            if epoch % self.step_size == 0 and epoch > 0:
-                self.lr_vector *= self.gamma
-                self.zeta *= self.gamma
-
-        self.velocity = np.maximum(
-            self.beta * self.velocity + self.zeta * velocity, 1e-10)
-        count = 0
-        for i in range(len(self.metrics.params)):
-            if i in self.metrics.mask:
-                self.lr_vector[i] = self.lr_vector[i - (1 if i > 0 else 0)]
-            else:
-                self.lr_vector[i] = self.velocity[count]
-                count += 1
 
     def step(self, closure: callable = None):
         """Performs a single optimization step.
