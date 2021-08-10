@@ -229,6 +229,7 @@ class TrainingAgent:
         self.checkpoint_path = checkpoint_path
         self.S = int(args.S)
         self.J = float(args.J)
+        self.measure = args.measure
         self.batch_stops = dict()
         self.MAX = args.MAX
 
