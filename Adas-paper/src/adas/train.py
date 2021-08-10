@@ -161,6 +161,23 @@ def args(sub_parser: _SubParsersAction):
     #     '--cutout-length', default=-1, type=int,
     #     help='Cutout length')
 
+    #New Custom Arguments: Group-C
+
+    sub_parser.add_argument(
+        '--S', default='10 50 100', type=str,
+        help='String of S for probing test: Default = [10, 50, 100]')
+    sub_parser.add_argument(
+        '--J', default='0.5 1 1.66', type=str,
+        help='String of J for probing test: Default = [0.5, 1, 1.66]')
+    sub_parser.add_argument(
+        '--sampling', default='default', type=str,
+        help='String of sampling for probing test: Default = [\'default\']')
+    sub_parser.add_argument(
+        '--MAX', default=10000000, type=int,
+        help='max number of parameters extracted from a weight tensor')
+    sub_parser.add_argument(
+        '--savewindows', default=0, type=int,
+        help='save window history in a pickle')
 
 class TrainingAgent:
     config: Dict[str, Any] = None
@@ -271,6 +288,20 @@ class TrainingAgent:
             print(f'Resuming config for trial {self.start_trial} at ' +
                   f'epoch {self.start_epoch}')
         # self.reset()
+
+    def load_iterations(self):
+        for i in range(len(self.train_loader)):
+            self.batch_stops[i] = []
+        for s in self.S:
+            for j in self.J:
+                encoding = "S" + str(s) + "_J" + str(j)
+                self.encodings.append(encoding)
+                index = s
+                if index>0:
+                    while(index < len(self.train_loader)):
+                        #print(self.RMSGD_config['batch_index'][encoding][-1])
+                            self.batch_stops[index-1].append(encoding)
+                            index += int(j*s)
 
     def reset(self, learning_rate: float) -> None:
         self.performance_statistics = dict()
