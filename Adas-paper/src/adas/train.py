@@ -169,7 +169,7 @@ def args(sub_parser: _SubParsersAction):
         '--S', default='100', type=str,
         help='String of S for probing: Default = 100')
     sub_parser.add_argument(
-        '--J', default='0.5 1 1.66', type=str,
+        '--J', default='1', type=str,
         help='String of J for probing: Default = 1.66')
     sub_parser.add_argument(
         '--measure', default='SR', type=str,
@@ -296,8 +296,8 @@ class TrainingAgent:
     def load_iterations(self):
         for i in range(len(self.train_loader)):
             self.batch_stops[i] = 0
-        for s in self.S:
-            for j in self.J:
+        for s in [self.S]:
+            for j in [self.J]:
                 index = s
                 if index>0:
                     while(index < len(self.train_loader)):
