@@ -508,7 +508,7 @@ class TrainingAgent:
                 if isinstance(self.optimizer, SPS):
                     self.optimizer.step(loss=loss)
                 elif isinstance(self.optimizer, HRMSGD):
-                    self.optimizer.batch_update()
+                    self.optimizer.batch_update(batch=batch_idx)
                     self.optimizer.step()
                 else:
                     self.optimizer.step()

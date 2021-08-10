@@ -29,7 +29,7 @@ class HRMSGD(Optimizer):
                  measure = "SR",
                  lr: float = required,
                  beta: float = 0, #LR momentum
-                 zeta: float = 1, #LR dampening
+                 zeta: float = 1, #LR (1-dampening)/scaling factor
                  momentum: float = 0, #SGD momentum
                  dampening: float = 0, #SGD dampening
                  weight_decay: float = 0,
