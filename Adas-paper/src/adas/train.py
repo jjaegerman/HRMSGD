@@ -166,16 +166,16 @@ def args(sub_parser: _SubParsersAction):
     #New Custom Arguments: Group-C
 
     sub_parser.add_argument(
-        '--S', default='10 50 100', type=str,
-        help='String of S for probing test: Default = [10, 50, 100]')
+        '--S', default='100', type=str,
+        help='String of S for probing: Default = 100')
     sub_parser.add_argument(
         '--J', default='0.5 1 1.66', type=str,
-        help='String of J for probing test: Default = [0.5, 1, 1.66]')
+        help='String of J for probing: Default = 1.66')
     sub_parser.add_argument(
-        '--sampling', default='default', type=str,
-        help='String of sampling for probing test: Default = [\'default\']')
+        '--measure', default='SR', type=str,
+        help='String of measure to use for probing: Default = [\'SR\']')
     sub_parser.add_argument(
-        '--MAX', default=10000000, type=int,
+        '--MAX', default=4000, type=int,
         help='max number of parameters extracted from a weight tensor')
 
 class TrainingAgent:

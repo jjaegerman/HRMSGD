@@ -26,7 +26,7 @@ class HRMSGD(Optimizer):
                  saves,
                  MAX = 4000,
                  S = 100,
-                 measure = "SQLRF",
+                 measure = "SR",
                  lr: float = required,
                  beta: float = 0, #LR momentum
                  zeta: float = 1, #LR dampening
