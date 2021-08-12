@@ -100,6 +100,7 @@ def get_optimizer_scheduler(
         S: int,
         measure: str,
         jump: float,
+        zeta: float,
         optimizer_kwargs=dict(),
         scheduler_kwargs=dict()
         ) -> torch.nn.Module:
@@ -125,6 +126,7 @@ def get_optimizer_scheduler(
             MAX = MAX,
             S = S,
             measure = measure,
+            zeta = zeta,
             **optim_processed_kwargs
         )
     elif optim_method == 'SGD':

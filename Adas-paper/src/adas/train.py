@@ -177,6 +177,9 @@ def args(sub_parser: _SubParsersAction):
     sub_parser.add_argument(
         '--MAX', default=4000, type=int,
         help='max number of parameters extracted from a weight tensor')
+    sub_parser.add_argument(
+        '--zeta', default=1, type=str,
+        help='max number of parameters extracted from a weight tensor')
 
 class TrainingAgent:
     config: Dict[str, Any] = None
@@ -232,6 +235,7 @@ class TrainingAgent:
         self.measure = args.measure
         self.batch_stops = dict()
         self.MAX = args.MAX
+        self.zeta = float(args.zeta)
 
         self.load_config(config_path, data_path)
         print("Adas: Experiment Configuration")
@@ -336,6 +340,7 @@ class TrainingAgent:
             S = self.S,
             measure = self.measure,
             jump = self.J,
+            zeta = self.zeta,
             optimizer_kwargs=self.config['optimizer_kwargs'],
             scheduler_kwargs=self.config['scheduler_kwargs'])
         self.early_stop.reset()
