@@ -385,6 +385,7 @@ class TrainingAgent:
                         '_'.join([f"{k}={v}" for k, v in
                                   self.config['scheduler_kwargs'].items()]) +\
                         f"_LR={learning_rate}" +\
+                        f"_measure={self.measure}" +\
                         ".xlsx".replace(' ', '-')
                 self.output_filename = str(
                     lr_output_path / self.output_filename)

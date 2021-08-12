@@ -80,8 +80,9 @@ class Metrics:
                     U_approx, S_approx, V_approx = EVBMF(slice)
                     if(len(torch.diag(S_approx).data.numpy())!=0):
                         low_slice = np.matmul(np.matmul(U_approx.data.numpy(),S_approx.data.numpy()),V_approx.data.numpy().T)
-                        low_rank_cov = np.cov(low_slice, rowvar=True)
+                        low_rank_cov = np.cov(low_slice, rowvar=True, bias=1)
                         low_rank_eigen = np.linalg.eigvals(low_rank_cov)
+                        low_rank_eigen = np.absolute(low_rank_eigen)
                         if("SR" in self.measure):
                             out.append((np.sum(low_rank_eigen/np.max(low_rank_eigen))-1)/slice_shape[0])
                         elif("FN" in self.measure):
@@ -93,8 +94,9 @@ class Metrics:
                 else:
                     #raw
                     slice = slice.data.numpy()
-                    cov = np.cov(slice, rowvar=True)
+                    cov = np.cov(slice, rowvar=True, bias=1)
                     eigen = np.linalg.eigvals(cov)
+                    eigen = np.absolute(eigen)
                     if("SR" in self.measure):
                         out.append(np.sum((eigen/np.max(eigen))-1)/slice_shape[0])
                     elif("FN" in self.measure):
