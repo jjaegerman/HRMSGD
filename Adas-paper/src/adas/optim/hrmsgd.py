@@ -23,7 +23,7 @@ class HRMSGD(Optimizer):
     def __init__(self,
                  params,
                  listed_params,
-                 saves,
+                 jump,
                  MAX = 4000,
                  S = 100,
                  measure = "SR",
@@ -59,8 +59,8 @@ class HRMSGD(Optimizer):
         self.lr_vector = np.repeat(a=lr, repeats=len(metrics.params))
         self.init_lr = lr
         self.zeta = zeta
-        self.saves = saves
-        self.start = 0
+        self.count = 0
+        self.gap = jump*S
 
     def __setstate__(self, state):
         super(HRMSGD, self).__setstate__(state)
@@ -69,7 +69,8 @@ class HRMSGD(Optimizer):
 
     def batch_update(self, batch):
         self.metrics()
-        if(self.saves[batch]):
+        self.count += 1
+        if(self.count%self.gap==0):
             measures = self.metrics.update()
             self.lr_vector = self.lr_vector*self.beta + self.zeta*measures
 

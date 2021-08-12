@@ -172,7 +172,7 @@ def args(sub_parser: _SubParsersAction):
         '--J', default='1', type=str,
         help='String of J for probing: Default = 1.66')
     sub_parser.add_argument(
-        '--measure', default='SR', type=str,
+        '--measure', default='ER', type=str,
         help='String of measure to use for probing: Default = [\'SR\']')
     sub_parser.add_argument(
         '--MAX', default=4000, type=int,
@@ -234,7 +234,6 @@ class TrainingAgent:
         self.MAX = args.MAX
 
         self.load_config(config_path, data_path)
-        self.load_iterations()
         print("Adas: Experiment Configuration")
         print("-"*45)
         for k, v in self.config.items():
@@ -294,17 +293,6 @@ class TrainingAgent:
                   f'epoch {self.start_epoch}')
         # self.reset()
 
-    def load_iterations(self):
-        for i in range(len(self.train_loader)):
-            self.batch_stops[i] = 0
-        for s in [self.S]:
-            for j in [self.J]:
-                index = s
-                if index>0:
-                    while(index < len(self.train_loader)):
-                        self.batch_stops[index-1]=1
-                        index += int(j*s)
-
     def reset(self, learning_rate: float) -> None:
         self.performance_statistics = dict()
         self.network = get_network(name=self.config['network'],
@@ -347,7 +335,7 @@ class TrainingAgent:
             MAX = self.MAX,
             S = self.S,
             measure = self.measure,
-            saves = self.batch_stops,
+            jump = self.J,
             optimizer_kwargs=self.config['optimizer_kwargs'],
             scheduler_kwargs=self.config['scheduler_kwargs'])
         self.early_stop.reset()

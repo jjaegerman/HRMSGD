@@ -83,7 +83,7 @@ class Metrics:
                         low_rank_cov = np.cov(low_slice, rowvar=True)
                         low_rank_eigen = np.linalg.eigvals(low_rank_cov)
                         if("SR" in self.measure):
-                            out.append(np.sum(low_rank_eigen/np.max(low_rank_eigen))/slice_shape[0])
+                            out.append((np.sum(low_rank_eigen/np.max(low_rank_eigen))-1)/slice_shape[0])
                         elif("FN" in self.measure):
                             out.append(np.sqrt(np.sum(low_rank_eigen**2)))
                         elif("ER" in self.measure):
@@ -96,7 +96,7 @@ class Metrics:
                     cov = np.cov(slice, rowvar=True)
                     eigen = np.linalg.eigvals(cov)
                     if("SR" in self.measure):
-                        out.append(np.sum(eigen/np.max(eigen))/slice_shape[0])
+                        out.append(np.sum((eigen/np.max(eigen))-1)/slice_shape[0])
                     elif("FN" in self.measure):
                         out.append(np.sqrt(np.sum(eigen**2)))
                     elif("ER" in self.measure):

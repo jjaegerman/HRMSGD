@@ -99,7 +99,7 @@ def get_optimizer_scheduler(
         MAX: int,
         S: int,
         measure: str,
-        saves = dict(),
+        jump: float,
         optimizer_kwargs=dict(),
         scheduler_kwargs=dict()
         ) -> torch.nn.Module:
@@ -121,7 +121,7 @@ def get_optimizer_scheduler(
             params=net_parameters,
             listed_params=listed_params,
             lr=init_lr,
-            saves = saves,
+            jump = jump,
             MAX = MAX,
             S = S,
             measure = measure,
