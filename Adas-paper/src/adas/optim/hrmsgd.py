@@ -67,7 +67,7 @@ class HRMSGD(Optimizer):
         for group in self.param_groups:
             group.setdefault('nesterov', False)
 
-    def batch_update(self, batch):
+    def batch_update(self):
         self.metrics()
         self.count += 1
         if(self.count%self.gap==0):
@@ -114,6 +114,12 @@ class HRMSGD(Optimizer):
                         d_p = buf
 
                 # p.data.add_(-group['lr'], d_p)
+                if(True in torch.isnan(d_p)):
+                    print("dp")
+                    print(d_p)
+                if(True == np.isnan(self.lr_vector[p_index])):
+                    print("lr")
+                    print(self.lr_vector[p_index])
                 p.data.add_(d_p, alpha=-self.lr_vector[p_index])
 
         return loss

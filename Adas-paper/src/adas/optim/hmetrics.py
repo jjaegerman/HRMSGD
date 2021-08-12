@@ -98,7 +98,7 @@ class Metrics:
                     eigen = np.linalg.eigvals(cov)
                     eigen = np.absolute(eigen)
                     if("SR" in self.measure):
-                        out.append(np.sum((eigen/np.max(eigen))-1)/slice_shape[0])
+                        out.append((np.sum(eigen/np.max(eigen))-1)/slice_shape[0])
                     elif("FN" in self.measure):
                         out.append(np.sqrt(np.sum(eigen**2)))
                     elif("ER" in self.measure):
@@ -110,7 +110,7 @@ class Metrics:
                     low_rank_eigen = torch.diag(S_approx).data.numpy()
                     if(len(torch.diag(S_approx).data.numpy())!=0):
                         if("SR" in self.measure):
-                            out.append(np.sum(low_rank_eigen/np.max(low_rank_eigen))/slice_shape[0])
+                            out.append((np.sum(low_rank_eigen/np.max(low_rank_eigen))-1)/slice_shape[0])
                         elif("FN" in self.measure):
                             out.append(np.sqrt(np.sum(low_rank_eigen**2)))
                         elif("ER" in self.measure):
@@ -122,7 +122,7 @@ class Metrics:
                     U, S, V = torch.svd(slice)
                     eigen = S.data.numpy()
                     if("SR" in self.measure):
-                        out.append(np.sum(eigen/np.max(eigen))/slice_shape[0])
+                        out.append((np.sum(eigen/np.max(eigen))-1)/slice_shape[0])
                     elif("FN" in self.measure):
                         out.append(np.sqrt(np.sum(eigen**2)))
                     elif("ER" in self.measure):
