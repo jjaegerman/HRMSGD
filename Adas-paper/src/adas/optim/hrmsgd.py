@@ -74,6 +74,10 @@ class HRMSGD(Optimizer):
             measures = self.metrics.update()
             self.lr_vector = self.lr_vector*self.beta + self.zeta*measures
 
+    def epoch_update(self):
+        for layer in range(len(self.metrics.history['lr'])):
+            self.metrics.history['lr'][layer].append(self.lr_vector[layer])
+        return self.metrics.history_update()
 
     def step(self, closure: callable = None):
         """Performs a single optimization step.
@@ -117,6 +121,7 @@ class HRMSGD(Optimizer):
                 if(True in torch.isnan(d_p)):
                     print("dp")
                     print(d_p)
+                    exit()
                 if(True == np.isnan(self.lr_vector[p_index])):
                     print("lr")
                     print(self.lr_vector[p_index])

@@ -31,6 +31,7 @@ from pathlib import Path
 import warnings
 import time
 import sys
+import pickle
 
 import torch.backends.cudnn as cudnn
 import torch.multiprocessing as mp
@@ -577,12 +578,17 @@ class TrainingAgent:
                 new_kg
             self.performance_statistics[f'learning_rate_epoch_{epoch}'] = \
                 new_lr_vec
+        elif isinstance(self.optimizer, HRMSGD):
+            history = self.optimizer.epoch_update()
+            with open(self.output_filename.replace(".xlsx",'.pickle'),'wb') as handle:
+                    pickle.dump(history, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
         else:
             # if GLOBALS.CONFIG['optim_method'] == 'SLS' or \
             #         GLOBALS.CONFIG['optim_method'] == 'SPS':
             if isinstance(self.optimizer, SLS) or isinstance(
                     self.optimizer, SPS) or isinstance(self.optimizer, AdaSLS):
-                self.performance_statistics[f'aearning_rate_epoch_{epoch}'] = \
+                self.performance_statistics[f'learning_rate_epoch_{epoch}'] = \
                     self.optimizer.state['step_size']
             # elif isinstance(self.optimizer, Adas):
             #     lr_vec = self.optimizer.param_groups[0]['lr']
