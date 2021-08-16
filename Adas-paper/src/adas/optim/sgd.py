@@ -71,8 +71,13 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 """
 import torch
+import sys
 from torch.optim.optimizer import Optimizer, required
-
+mod_name = vars(sys.modules[__name__])['__name__']
+if 'adas.' in mod_name:
+    from .hmetrics import Metrics
+else:
+    from optim.hmetrics import Metrics
 
 class SGD(Optimizer):
     r"""Implements stochastic gradient descent (optionally with momentum).
@@ -124,7 +129,7 @@ class SGD(Optimizer):
         The Nesterov version is analogously modified.
     """
 
-    def __init__(self, params, lr=required, momentum=0, dampening=0,
+    def __init__(self, params, listed_params, lr=required, momentum=0, dampening=0,
                  weight_decay=0, nesterov=False):
         if lr is not required and lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
@@ -133,7 +138,7 @@ class SGD(Optimizer):
         if weight_decay < 0.0:
             raise ValueError(
                 "Invalid weight_decay value: {}".format(weight_decay))
-
+        self.metrics = Metrics(params=listed_params, MAX=4000, S=100, measure="ER")
         defaults = dict(lr=lr, momentum=momentum, dampening=dampening,
                         weight_decay=weight_decay, nesterov=nesterov)
         if nesterov and (momentum <= 0 or dampening != 0):
@@ -188,6 +193,16 @@ class SGD(Optimizer):
 
         return loss
 
+    def batch_update(self):
+        self.metrics()
+
+    def epoch_update(self):
+        i = 0
+        for group in (self.param_groups):
+            for p in (group['params']):
+                self.metrics.history['lr'][i].append(group['lr'])
+                i += 1
+        return self.metrics.history_update()
 
 class SGDVec(Optimizer):
     r"""Implements stochastic gradient descent (optionally with momentum).
@@ -245,7 +260,6 @@ class SGDVec(Optimizer):
         if weight_decay < 0.0:
             raise ValueError(
                 "Invalid weight_decay value: {}".format(weight_decay))
-
         defaults = dict(lr=lr, momentum=momentum, dampening=dampening,
                         weight_decay=weight_decay, nesterov=nesterov)
         if nesterov and (momentum <= 0 or dampening != 0):

@@ -136,7 +136,7 @@ def get_optimizer_scheduler(
                 "'momentum' and 'weight_decay' need to be specified for"
                 " SGD optimizer in config.yaml::**kwargs")
         optimizer = SGD(
-            net_parameters, lr=init_lr,
+            net_parameters, listed_params, lr=init_lr,
             # momentum=kwargs['momentum'],
             # weight_decay=kwargs['weight_decay']
             **optim_processed_kwargs)

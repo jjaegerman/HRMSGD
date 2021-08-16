@@ -60,6 +60,7 @@ if 'adas.' in mod_name:
     from .data import get_data
     from .optim.adas import Adas
     from .optim.hrmsgd import HRMSGD
+    from .optim.sgd import SGD
 else:
     from optim.lr_scheduler import CosineAnnealingWarmRestarts, StepLR, \
         OneCycleLR
@@ -76,6 +77,7 @@ else:
     from data import get_data
     from optim.adas import Adas
     from optim.hrmsgd import HRMSGD
+    from optim.sgd import SGD
 
 
 def args(sub_parser: _SubParsersAction):
@@ -506,6 +508,9 @@ class TrainingAgent:
                 elif isinstance(self.optimizer, HRMSGD):
                     self.optimizer.batch_update()
                     self.optimizer.step()
+                elif isinstance(self.optimizer, SGD):
+                    self.optimizer.batch_update()
+                    self.optimizer.step()
                 else:
                     self.optimizer.step()
 
@@ -578,7 +583,7 @@ class TrainingAgent:
                 new_kg
             self.performance_statistics[f'learning_rate_epoch_{epoch}'] = \
                 new_lr_vec
-        elif isinstance(self.optimizer, HRMSGD):
+        elif isinstance(self.optimizer, HRMSGD) or isinstance(self.optimizer, SGD):
             history = self.optimizer.epoch_update()
             with open(self.output_filename.replace(".xlsx",'.pickle'),'wb') as handle:
                     pickle.dump(history, handle, protocol=pickle.HIGHEST_PROTOCOL)
