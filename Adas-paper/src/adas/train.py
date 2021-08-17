@@ -584,7 +584,7 @@ class TrainingAgent:
             self.performance_statistics[f'learning_rate_epoch_{epoch}'] = \
                 new_lr_vec
         elif isinstance(self.optimizer, HRMSGD) or isinstance(self.optimizer, SGD):
-            history = self.optimizer.epoch_update()
+            history = self.optimizer.epoch_update(epoch=epoch)
             with open(self.output_filename.replace(".xlsx",'.pickle'),'wb') as handle:
                     pickle.dump(history, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
