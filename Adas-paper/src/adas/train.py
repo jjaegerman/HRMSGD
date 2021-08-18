@@ -172,7 +172,7 @@ def args(sub_parser: _SubParsersAction):
         '--J', default='1', type=str,
         help='String of J for probing: Default = 1.66')
     sub_parser.add_argument(
-        '--measure', default='ER', type=str,
+        '--measure', default='SR', type=str,
         help='String of measure to use for probing: Default = [\'SR\']')
     sub_parser.add_argument(
         '--MAX', default=4000, type=int,
