@@ -31,6 +31,7 @@ from pathlib import Path
 import warnings
 import time
 import sys
+import pickle
 
 import torch.backends.cudnn as cudnn
 import torch.multiprocessing as mp
@@ -59,6 +60,7 @@ if 'adas.' in mod_name:
     from .data import get_data
     from .optim.adas import Adas
     from .optim.hrmsgd import HRMSGD
+    from .optim.sgd import SGD
 else:
     from optim.lr_scheduler import CosineAnnealingWarmRestarts, StepLR, \
         OneCycleLR
@@ -75,6 +77,7 @@ else:
     from data import get_data
     from optim.adas import Adas
     from optim.hrmsgd import HRMSGD
+    from optim.sgd import SGD
 
 
 def args(sub_parser: _SubParsersAction):
@@ -177,6 +180,9 @@ def args(sub_parser: _SubParsersAction):
     sub_parser.add_argument(
         '--MAX', default=4000, type=int,
         help='max number of parameters extracted from a weight tensor')
+    sub_parser.add_argument(
+        '--zeta', default=1, type=str,
+        help='max number of parameters extracted from a weight tensor')
 
 class TrainingAgent:
     config: Dict[str, Any] = None
@@ -232,6 +238,7 @@ class TrainingAgent:
         self.measure = args.measure
         self.batch_stops = dict()
         self.MAX = args.MAX
+        self.zeta = float(args.zeta)
 
         self.load_config(config_path, data_path)
         print("Adas: Experiment Configuration")
@@ -336,6 +343,7 @@ class TrainingAgent:
             S = self.S,
             measure = self.measure,
             jump = self.J,
+            zeta = self.zeta,
             optimizer_kwargs=self.config['optimizer_kwargs'],
             scheduler_kwargs=self.config['scheduler_kwargs'])
         self.early_stop.reset()
@@ -380,6 +388,8 @@ class TrainingAgent:
                         '_'.join([f"{k}={v}" for k, v in
                                   self.config['scheduler_kwargs'].items()]) +\
                         f"_LR={learning_rate}" +\
+                        f"_measure={self.measure}" +\
+                        f"_zeta={self.zeta}" +\
                         ".xlsx".replace(' ', '-')
                 self.output_filename = str(
                     lr_output_path / self.output_filename)
@@ -496,7 +506,10 @@ class TrainingAgent:
                 if isinstance(self.optimizer, SPS):
                     self.optimizer.step(loss=loss)
                 elif isinstance(self.optimizer, HRMSGD):
-                    self.optimizer.batch_update(batch=batch_idx)
+                    self.optimizer.batch_update()
+                    self.optimizer.step()
+                elif isinstance(self.optimizer, SGD):
+                    self.optimizer.batch_update()
                     self.optimizer.step()
                 else:
                     self.optimizer.step()
@@ -570,12 +583,17 @@ class TrainingAgent:
                 new_kg
             self.performance_statistics[f'learning_rate_epoch_{epoch}'] = \
                 new_lr_vec
+        elif isinstance(self.optimizer, HRMSGD) or isinstance(self.optimizer, SGD):
+            history = self.optimizer.epoch_update(epoch=epoch)
+            with open(self.output_filename.replace(".xlsx",'.pickle'),'wb') as handle:
+                    pickle.dump(history, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
         else:
             # if GLOBALS.CONFIG['optim_method'] == 'SLS' or \
             #         GLOBALS.CONFIG['optim_method'] == 'SPS':
             if isinstance(self.optimizer, SLS) or isinstance(
                     self.optimizer, SPS) or isinstance(self.optimizer, AdaSLS):
-                self.performance_statistics[f'aearning_rate_epoch_{epoch}'] = \
+                self.performance_statistics[f'learning_rate_epoch_{epoch}'] = \
                     self.optimizer.state['step_size']
             # elif isinstance(self.optimizer, Adas):
             #     lr_vec = self.optimizer.param_groups[0]['lr']

@@ -28,12 +28,14 @@ class HRMSGD(Optimizer):
                  S = 100,
                  measure = "SR",
                  lr: float = required,
-                 beta: float = 0, #LR momentum
                  zeta: float = 1, #LR (1-dampening)/scaling factor
+                 beta: float = 0, #LR momentum
                  momentum: float = 0, #SGD momentum
                  dampening: float = 0, #SGD dampening
                  weight_decay: float = 0,
-                 nesterov: bool = False
+                 nesterov: bool = False,
+                 step_size: int = None,
+                 gamma: float = 1
                  ):
 
         if lr is not required and lr < 0.0:
@@ -57,6 +59,8 @@ class HRMSGD(Optimizer):
         self.beta = beta
         self.metrics = metrics = Metrics(params=listed_params, MAX=MAX, S=S, measure=measure)
         self.lr_vector = np.repeat(a=lr, repeats=len(metrics.params))
+        self.step_size = step_size
+        self.gamma = gamma
         self.init_lr = lr
         self.zeta = zeta
         self.count = 0
@@ -67,13 +71,21 @@ class HRMSGD(Optimizer):
         for group in self.param_groups:
             group.setdefault('nesterov', False)
 
-    def batch_update(self, batch):
+    def batch_update(self):
         self.metrics()
         self.count += 1
         if(self.count%self.gap==0):
             measures = self.metrics.update()
             self.lr_vector = self.lr_vector*self.beta + self.zeta*measures
 
+    def epoch_update(self, epoch):
+        for layer in range(len(self.metrics.history['lr'])):
+            self.metrics.history['lr'][layer].append(self.lr_vector[layer])
+        if self.step_size is not None:
+            if epoch % self.step_size == 0 and epoch > 0:
+                self.lr_vector *= self.gamma
+                self.zeta *= self.gamma
+        return self.metrics.history_update()
 
     def step(self, closure: callable = None):
         """Performs a single optimization step.
@@ -114,6 +126,13 @@ class HRMSGD(Optimizer):
                         d_p = buf
 
                 # p.data.add_(-group['lr'], d_p)
+                if(True in torch.isnan(d_p)):
+                    print("dp")
+                    print(d_p)
+                    exit()
+                if(True == np.isnan(self.lr_vector[p_index])):
+                    print("lr")
+                    print(self.lr_vector[p_index])
                 p.data.add_(d_p, alpha=-self.lr_vector[p_index])
 
         return loss
