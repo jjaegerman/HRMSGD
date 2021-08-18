@@ -15,8 +15,8 @@ scheduler: 'None' # options: AdaS (with SGD), StepLR, CosineAnnealingWarmRestart
 init_lr: 0.03
 early_stop_threshold: -1 # set to -1 if you wish not to use early stop, or equally, set to a high value. Set to -1 if not using AdaS
 optimizer_kwargs:
-  weight_decay: 0
-  momentum: 0
+  step_size: 25
+  gamma: 0.5
 scheduler_kwargs: {}
 cutout: False
 n_holes: 1

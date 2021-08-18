@@ -9,10 +9,7 @@ import torch
 
 mod_name = vars(sys.modules[__name__])['__name__']
 
-if 'adas.' in mod_name:
-    from .matrix_factorization import EVBMF
-else:
-    from optim.matrix_factorization import EVBMF
+from VBMF import EVBMF
 
 
 class Metrics:
