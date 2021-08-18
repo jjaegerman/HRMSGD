@@ -1,20 +1,12 @@
 #Define list of hyperparameter varations
-metrics = ['SRdefault', 'SRLRFdefault', 'SRsquare','SRLRFsquare', 'SRcov','SRLRFcov',
-           'ERdefault', 'ERLRFdefault', 'ERsquare','ERLRFsquare', 'ERcov','ERLRFcov']
-zetas   = { 'SRdefault':    [1, 2, 4, 8, 16, 32, 64, 128], 
-            'SRLRFdefault': [1, 2, 4, 8, 16, 32, 64, 128], 
-            'SRsquare':     [1, 2, 4, 8, 16, 32, 64, 128],
-            'SRLRFsquare':  [1, 2, 4, 8, 16, 32, 64, 128], 
-            'SRcov':        [1, 2, 4, 8, 16, 32, 64, 128],
-            'SRLRFcov':     [1, 2, 4, 8, 16, 32, 64, 128],
-            'ERdefault':    [0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 0.128], 
-            'ERLRFdefault': [0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 0.128], 
-            'ERsquare':     [0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 0.128],
-            'ERLRFsquare':  [0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 0.128], 
-            'ERcov':        [0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 0.128],
-            'ERLRFcov':     [0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64, 0.128]
+names = ['SRdefault_step0', 'SRdefault_step1', 'ERdefault_step0','ERdefault_step1',
+         'SRdefault_mome0', 'SRdefault_mome1', 'ERdefault_mome0','ERdefault_mome1']
+zetas   = { 'SRdefault0':    [15, 30, 45, 60],
+            'SRdefault1':    [75, 90, 105, 120],
+            'ERdefault0':    [0.03, 0.08, 0.13, 0.18],
+            'ERdefault1':    [0.23, 0.28, 0.33, 0.38]
            }
-
+configs = ['config_step.yaml', 'config_mome.yamls']
 
 default = '''#!/bin/bash 
 ### GPU OPTIONS:
@@ -36,17 +28,34 @@ source ~/scratch/August/HRMSGD/EnvAdas/bin/activate
 '''
 
 #Specify the constants in the config file
-
-
 i = 0
-for idm, metric in enumerate(metrics):
-    f = open("f:/Research/Multimedia/August/HRMSGD/plotting/batch_files/" + metric + ".sh", "w")
-    f.write(default)
-    for z in zetas[metric]:
-    
-            print(i, ": python ~/scratch/August/HRMSGD/Adas-paper/src/adas/train.py --measure='" + str(metric) + "' --zeta=" + str(z))
+for name in names:
+        metric = name.split('_')[0]
+        f = open("f:/Research/Multimedia/August/HRMSGD/plotting/batch_files/" + name + ".sh", "w")
+        f.write(default)
+
+        config = name.split('_')[1][:-1]
+        config = 'config_' + config + '.yaml'
+
+        for z in zetas[metric + name.split('_')[1][-1]]:
+        
+            print(i, ": python ~/scratch/August/HRMSGD/Adas-paper/src/adas/train.py --measure='" + metric + "' --zeta=" + str(z) + ' --config=\'' + config + "'")
             i += 1
 
-            f.write("python ~/scratch/August/HRMSGD/Adas-paper/src/adas/train.py --measure='" + str(metric) + "' --zeta=" + str(z))
+            f.write("python ~/scratch/August/HRMSGD/Adas-paper/src/adas/train.py --measure='" + metric + "' --zeta=" + str(z) + ' --config=\'' + config + "'")
             f.write("\n")
-    f.close()
+
+        f.close()
+
+# i = 0
+# for idm, metric in enumerate(zetas.keys()):
+#     f = open("f:/Research/Multimedia/August/HRMSGD/plotting/batch_files/" + metric + ".sh", "w")
+#     f.write(default)
+#     for z in zetas[metric]:
+    
+#             print(i, ": python ~/scratch/August/HRMSGD/Adas-paper/src/adas/train.py --measure='" + str(metrics[idm]) + "' --zeta=" + str(z))
+#             i += 1
+
+#             f.write("python ~/scratch/August/HRMSGD/Adas-paper/src/adas/train.py --measure='" + str(metrics[idm]) + "' --zeta=" + str(z))
+#             f.write("\n")
+#     f.close()
