@@ -175,24 +175,24 @@ class Metrics:
             square_svals = square_svals[square_svals!=0]
             if(len(square_svals)!=0):
                 self.history['square']["SR"][layer_index].append((np.sum(square_svals/np.max(square_svals))-1)/(square_svals.shape)[0])
-                self.history['square']["ER"][layer_index].append(np.sqrt(np.sum(square_svals**2)))
-                self.history['square']["FN"][layer_index].append(-np.sum(np.multiply(square_svals/np.sum(square_svals),np.log(square_svals/np.sum(square_svals)))))
+                self.history['square']["FN"][layer_index].append(np.sqrt(np.sum(square_svals**2)))
+                self.history['square']["ER"][layer_index].append(-np.sum(np.multiply(square_svals/np.sum(square_svals),np.log(square_svals/np.sum(square_svals)))))
             else:
                 self.history['square']["SR"][layer_index].append(0)
-                self.history['square']["ER"][layer_index].append(0)
                 self.history['square']["FN"][layer_index].append(0)
+                self.history['square']["ER"][layer_index].append(0)
 
             _, low_rank_square_svals, _ = EVBMF(square)
             low_rank_square_svals = torch.diag(low_rank_square_svals).data.numpy()
             low_rank_square_svals = low_rank_square_svals[low_rank_square_svals!=0]
             if(len(low_rank_square_svals != 0)):
                 self.history['square']["SRLRF"][layer_index].append((np.sum(low_rank_square_svals/np.max(low_rank_square_svals))-1)/(low_rank_square_svals.shape)[0])
-                self.history['square']["ERLRF"][layer_index].append(np.sqrt(np.sum(low_rank_square_svals**2)))
-                self.history['square']["FNLRF"][layer_index].append(-np.sum(np.multiply(low_rank_square_svals/np.sum(low_rank_square_svals),np.log(low_rank_square_svals/np.sum(low_rank_square_svals)))))
+                self.history['square']["FNLRF"][layer_index].append(np.sqrt(np.sum(low_rank_square_svals**2)))
+                self.history['square']["ERLRF"][layer_index].append(-np.sum(np.multiply(low_rank_square_svals/np.sum(low_rank_square_svals),np.log(low_rank_square_svals/np.sum(low_rank_square_svals)))))
             else:
                 self.history['square']["SRLRF"][layer_index].append(0)
-                self.history['square']["ERLRF"][layer_index].append(0)
                 self.history['square']["FNLRF"][layer_index].append(0)
+                self.history['square']["ERLRF"][layer_index].append(0)
 
             U_approx, S_approx, V_approx = EVBMF(slice)
             low_rank_slice = np.matmul(np.matmul(U_approx.data.numpy(),S_approx.data.numpy()),V_approx.data.numpy().T)
@@ -205,34 +205,34 @@ class Metrics:
                 low_rank_cov_eigen = low_rank_cov_eigen[low_rank_cov_eigen!=0]
                 if(len(low_rank_cov_eigen)!=0):
                     self.history['cov']["SRLRF"][layer_index].append((np.sum(low_rank_cov_eigen/np.max(low_rank_cov_eigen))-1)/(low_rank_cov_eigen.shape)[0])
-                    self.history['cov']["ERLRF"][layer_index].append(np.sqrt(np.sum(low_rank_cov_eigen**2)))
-                    self.history['cov']["FNLRF"][layer_index].append(-np.sum(np.multiply(low_rank_cov_eigen/np.sum(low_rank_cov_eigen),np.log(low_rank_cov_eigen/np.sum(low_rank_cov_eigen)))))
+                    self.history['cov']["FNLRF"][layer_index].append(np.sqrt(np.sum(low_rank_cov_eigen**2)))
+                    self.history['cov']["ERLRF"][layer_index].append(-np.sum(np.multiply(low_rank_cov_eigen/np.sum(low_rank_cov_eigen),np.log(low_rank_cov_eigen/np.sum(low_rank_cov_eigen)))))
                 else:
                     self.history['cov']["SRLRF"][layer_index].append(0)
-                    self.history['cov']["ERLRF"][layer_index].append(0)
                     self.history['cov']["FNLRF"][layer_index].append(0)
+                    self.history['cov']["ERLRF"][layer_index].append(0)
                 self.history['default']["SRLRF"][layer_index].append((np.sum(low_rank_svals/np.max(low_rank_svals))-1)/(low_rank_svals.shape)[0])
-                self.history['default']["ERLRF"][layer_index].append(np.sqrt(np.sum(low_rank_svals**2)))
-                self.history['default']["FNLRF"][layer_index].append(-np.sum(np.multiply(low_rank_svals/np.sum(low_rank_svals),np.log(low_rank_svals/np.sum(low_rank_svals)))))
+                self.history['default']["FNLRF"][layer_index].append(np.sqrt(np.sum(low_rank_svals**2)))
+                self.history['default']["ERLRF"][layer_index].append(-np.sum(np.multiply(low_rank_svals/np.sum(low_rank_svals),np.log(low_rank_svals/np.sum(low_rank_svals)))))
             else:
                 self.history['cov']["SRLRF"][layer_index].append(0)
-                self.history['cov']["ERLRF"][layer_index].append(0)
                 self.history['cov']["FNLRF"][layer_index].append(0)
+                self.history['cov']["ERLRF"][layer_index].append(0)
                 self.history['default']["SRLRF"][layer_index].append(0)
-                self.history['default']["ERLRF"][layer_index].append(0)
                 self.history['default']["FNLRF"][layer_index].append(0)
+                self.history['default']["ERLRF"][layer_index].append(0)
 
             U, S, V = torch.svd(slice)
             svals = S.data.numpy()
             svals = svals[svals!=0]
             if(len(svals)!=0):
                 self.history['default']["SR"][layer_index].append((np.sum(svals/np.max(svals))-1)/(svals.shape)[0])
-                self.history['default']["ER"][layer_index].append(np.sqrt(np.sum(svals**2)))
-                self.history['default']["FN"][layer_index].append(-np.sum(np.multiply(svals/np.sum(svals),np.log(svals/np.sum(svals)))))
+                self.history['default']["FN"][layer_index].append(np.sqrt(np.sum(svals**2)))
+                self.history['default']["ER"][layer_index].append(-np.sum(np.multiply(svals/np.sum(svals),np.log(svals/np.sum(svals)))))
             else:
                 self.history['default']["SR"][layer_index].append(0)
-                self.history['default']["ER"][layer_index].append(0)
                 self.history['default']["FN"][layer_index].append(0)
+                self.history['default']["ER"][layer_index].append(0)
 
             cov = np.cov(slice, rowvar=True, bias=1)
             cov_eigen = np.linalg.eigvals(cov)
@@ -240,12 +240,12 @@ class Metrics:
             cov_eigen = cov_eigen[cov_eigen!=0]
             if(len(cov_eigen)!=0):
                 self.history['cov']["SR"][layer_index].append((np.sum(cov_eigen/np.max(cov_eigen))-1)/(cov_eigen.shape)[0])
-                self.history['cov']["ER"][layer_index].append(np.sqrt(np.sum(cov_eigen**2)))
-                self.history['cov']["FN"][layer_index].append(-np.sum(np.multiply(cov_eigen/np.sum(cov_eigen),np.log(cov_eigen/np.sum(cov_eigen)))))
+                self.history['cov']["FN"][layer_index].append(np.sqrt(np.sum(cov_eigen**2)))
+                self.history['cov']["ER"][layer_index].append(-np.sum(np.multiply(cov_eigen/np.sum(cov_eigen),np.log(cov_eigen/np.sum(cov_eigen)))))
             else:
                 self.history['cov']["SR"][layer_index].append(0)
-                self.history['cov']["ER"][layer_index].append(0)
                 self.history['cov']["FN"][layer_index].append(0)
+                self.history['cov']["ER"][layer_index].append(0)
 
         return self.history
             
