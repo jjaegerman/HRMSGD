@@ -17,6 +17,8 @@ early_stop_threshold: -1 # set to -1 if you wish not to use early stop, or equal
 optimizer_kwargs:
   step_size: 25
   gamma: 0.5
+  beta: 0.15
+  ready: True
 scheduler_kwargs: {}
 cutout: False
 n_holes: 1
