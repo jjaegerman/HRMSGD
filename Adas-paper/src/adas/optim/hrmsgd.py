@@ -86,7 +86,7 @@ class HRMSGD(Optimizer):
                 if self.not_ready:
                     self.lr_vector[i] = self.lr_vector[i]
                 else:
-                    self.lr_vector[i] = np.maximum(self.beta*self.lr_vector[i] + self.zeta*measures[i],1e-10)
+                    self.lr_vector[i] = np.maximum(self.beta*self.lr_vector[i] + self.zeta*(1-self.beta)*measures[i],1e-10)
 
     def epoch_update(self, epoch):
         if(epoch==5):
