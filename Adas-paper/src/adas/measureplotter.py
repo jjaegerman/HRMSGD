@@ -68,7 +68,7 @@ for layer in list(range(depth)):
     else:
         layers.append("skip")
 
-filename='measureevo/results_date2021-08-16-22-30-26_trial0_ResNet18CIFAR_CIFAR10_SGDweight_decay0.0_momentum0.0_StepLRst.pickle'
+filename='measureevo/results_date=2021-08-19-01-26-44_trial=0_ResNet18CIFAR_CIFAR10_HRMSGDweight_decay=0.0_momentum=0.0_None_LR=0.03_measure=ERdefault_zeta=0.23.pickle'
 measure = filename.split('_')[-2].split('=')[-1]
 zeta = filename.split('_')[-1].split('=')[-1][:-7]
 infile = open(filename,'rb')

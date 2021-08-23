@@ -34,6 +34,7 @@ class HRMSGD(Optimizer):
                  dampening: float = 0, #SGD dampening
                  weight_decay: float = 0,
                  nesterov: bool = False,
+                 ready: bool = False,
                  step_size: int = None,
                  gamma: float = 1
                  ):
@@ -61,10 +62,15 @@ class HRMSGD(Optimizer):
         self.lr_vector = np.repeat(a=lr, repeats=len(metrics.params))
         self.step_size = step_size
         self.gamma = gamma
+        self.ready = ready
+        if(ready):
+            self.not_ready = 1
+        else:
+            self.not_ready = 0
         self.init_lr = lr
         self.zeta = zeta
         self.count = 0
-        self.gap = jump*S
+        self.gap = int(jump*S)
 
     def __setstate__(self, state):
         super(HRMSGD, self).__setstate__(state)
@@ -76,9 +82,15 @@ class HRMSGD(Optimizer):
         self.count += 1
         if(self.count%self.gap==0):
             measures = self.metrics.update()
-            self.lr_vector = self.lr_vector*self.beta + self.zeta*measures
+            for i in range(len(list(self.lr_vector))):
+                if self.not_ready:
+                    self.lr_vector[i] = self.lr_vector[i]
+                else:
+                    self.lr_vector[i] = np.maximum(self.beta*self.lr_vector[i] + self.zeta*(1-self.beta)*measures[i],1e-10)
 
     def epoch_update(self, epoch):
+        if(epoch==5):
+            self.not_ready=0
         for layer in range(len(self.metrics.history['lr'])):
             self.metrics.history['lr'][layer].append(self.lr_vector[layer])
         if self.step_size is not None:

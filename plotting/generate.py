@@ -1,10 +1,28 @@
 #Define list of hyperparameter varations
+'''
 names = ['SRdefault_step0', 'SRdefault_step1', 'ERdefault_step0','ERdefault_step1',
-         'SRdefault_mome0', 'SRdefault_mome1', 'ERdefault_mome0','ERdefault_mome1']
-zetas   = { 'SRdefault0':    [15, 30, 45, 60],
-            'SRdefault1':    [75, 90, 105, 120],
-            'ERdefault0':    [0.03, 0.08, 0.13, 0.18],
-            'ERdefault1':    [0.23, 0.28, 0.33, 0.38]
+         'SRdefault_mome0', 'SRdefault_mome1', 'ERdefault_mome0','ERdefault_mome1']'''
+zetas   = { 'SRready0':    [15, 30, 45, 60],
+            'SRready1':    [75, 90, 105, 120],
+            'ERready0':    [0.03, 0.08, 0.13, 0.18],
+            'ERready1':    [0.23, 0.28, 0.33, 0.38],
+            'SRlrmom0':    [30],
+            'SRlrmom1':    [60],
+            'SRlrmom2':    [90],
+            'ERlrmom0':    [0.08],
+            'ERlrmom1':    [0.18],
+            'ERlrmom2':    [0.28]
+           }
+betas = { 'SRready0':    [0],
+            'SRready1':    [0],
+            'ERready0':    [0],
+            'ERready1':    [0],
+            'SRlrmom0':    [0.1,0.2,0.3],
+            'SRlrmom1':    [0.1,0.2,0.3],
+            'SRlrmom2':    [0.1,0.2,0.3],
+            'ERlrmom0':    [0.1,0.2,0.3],
+            'ERlrmom1':    [0.1,0.2,0.3],
+            'ERlrmom2':    [0.1,0.2,0.3]
            }
 configs = ['config_step.yaml', 'config_mome.yamls']
 
@@ -27,8 +45,8 @@ source ~/scratch/August/HRMSGD/EnvAdas/bin/activate
 
 '''
 
-#Specify the constants in the config file
-i = 0
+#Specify the constants in the config file'''
+'''i = 0
 for name in names:
         metric = name.split('_')[0]
         f = open("f:/Research/Multimedia/August/HRMSGD/plotting/batch_files/" + name + ".sh", "w")
@@ -46,7 +64,7 @@ for name in names:
             f.write("\n")
 
         f.close()
-
+'''
 # i = 0
 # for idm, metric in enumerate(zetas.keys()):
 #     f = open("f:/Research/Multimedia/August/HRMSGD/plotting/batch_files/" + metric + ".sh", "w")
@@ -59,3 +77,9 @@ for name in names:
 #             f.write("python ~/scratch/August/HRMSGD/Adas-paper/src/adas/train.py --measure='" + str(metrics[idm]) + "' --zeta=" + str(z))
 #             f.write("\n")
 #     f.close()
+for name, zeta in zetas.items():
+    f = open(name + ".sh", "w")
+    f.write(default)
+    for z in zeta:
+        for b in betas[name]:
+            f.write("python train.py --config='"+name[2:-1]+"config.yaml"+"' --measure='" + str(name[0:2]) + "' --zeta=" + str(z)+" --beta="+str(b)+"\n")

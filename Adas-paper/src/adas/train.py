@@ -183,6 +183,9 @@ def args(sub_parser: _SubParsersAction):
     sub_parser.add_argument(
         '--zeta', default=1, type=str,
         help='max number of parameters extracted from a weight tensor')
+    sub_parser.add_argument(
+        '--beta', default=0, type=str,
+        help='max number of parameters extracted from a weight tensor')
 
 class TrainingAgent:
     config: Dict[str, Any] = None
@@ -239,6 +242,7 @@ class TrainingAgent:
         self.batch_stops = dict()
         self.MAX = args.MAX
         self.zeta = float(args.zeta)
+        self.beta = float(args.beta)
 
         self.load_config(config_path, data_path)
         print("Adas: Experiment Configuration")
@@ -344,6 +348,7 @@ class TrainingAgent:
             measure = self.measure,
             jump = self.J,
             zeta = self.zeta,
+            beta = self.beta,
             optimizer_kwargs=self.config['optimizer_kwargs'],
             scheduler_kwargs=self.config['scheduler_kwargs'])
         self.early_stop.reset()
@@ -390,6 +395,7 @@ class TrainingAgent:
                         f"_LR={learning_rate}" +\
                         f"_measure={self.measure}" +\
                         f"_zeta={self.zeta}" +\
+                        f"_beta={self.beta}" +\
                         ".xlsx".replace(' ', '-')
                 self.output_filename = str(
                     lr_output_path / self.output_filename)
