@@ -6,7 +6,7 @@ import glob
 from PIL import Image as im
 
 MAX = ['4000']
-processing = ['default','square','cov']
+processing = ['default']
 metrics = ['${\widehat{Q}_{SR}}$','${{Q}_{SR}}$','$\widehat{Q}_{E}$','${Q}_{E}$']
 model = 'RESNET18'
 
@@ -69,6 +69,14 @@ for layer in list(range(depth)):
         layers.append("skip")
 
 filename='measureevo/results_date=2021-08-19-01-26-44_trial=0_ResNet18CIFAR_CIFAR10_HRMSGDweight_decay=0.0_momentum=0.0_None_LR=0.03_measure=ERdefault_zeta=0.23.pickle'
+beta = ''
+for block in filename.split('_'):
+    if "measure" in block:
+        measure = block.replace("measure=",'')
+    if "zeta" in block:
+        zeta = block.replace("zeta=",'')
+    if "beta" in block:
+        beta = block.replace("beta=",'')
 measure = filename.split('_')[-2].split('=')[-1]
 zeta = filename.split('_')[-1].split('=')[-1][:-7]
 infile = open(filename,'rb')
@@ -91,7 +99,7 @@ for process in processing:
             plt.title(layer_type+" "+ process+" "+ metrics[x]+ " trained on " + measure+ zeta)
             plt.ylabel(metrics[x])
             plt.xlabel("Epoch")
-            plt.savefig('measureplots/' + model +'_'+layer_type+'_'+measure+'-'.join(zeta.split('.'))+"_"+process+"-"+str(x)+".png")
+            plt.savefig('measureplots/' + model +'_'+layer_type+'_'+measure+'-'.join(zeta.split('.'))+'-'.join(beta.split('.'))+"_"+process+"-"+str(x)+".png")
             plt.clf()
 exit()
     
