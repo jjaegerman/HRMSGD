@@ -87,8 +87,8 @@ for process in processing:
     for i, layer in enumerate(layers):
         plotting[layer][0].append(outfile[process]['SRLRF'][i])
         plotting[layer][1].append(outfile[process]['SR'][i])
-        plotting[layer][2].append(outfile[process]['FNLRF'][i])
-        plotting[layer][3].append(outfile[process]['FN'][i])
+        plotting[layer][2].append(outfile[process]['ERLRF'][i])
+        plotting[layer][3].append(outfile[process]['ER'][i])
     for layer_type, plot in plotting.items():
         for x, metric in enumerate(plot):
             length = len(metric)
