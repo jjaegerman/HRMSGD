@@ -67,18 +67,18 @@ for layer in list(range(depth)):
         layers.append("expansion")
     else:
         layers.append("skip")
-
-filename='measureevo/results_date=2021-08-19-01-26-44_trial=0_ResNet18CIFAR_CIFAR10_HRMSGDweight_decay=0.0_momentum=0.0_None_LR=0.03_measure=ERdefault_zeta=0.23.pickle'
+filename='metricevo/results_date=2021-08-20-14-19-57_trial=0_ResNet18CIFAR_CIFAR10_HRMSGDweight_decay=0.0_momentum=0.0_step_size=25.0_gamma=0.5_ready=1.0_None_LR=0.1_measure=ER_zeta=0.28_beta=0.3.pickle'
 beta = ''
 for block in filename.split('_'):
     if "measure" in block:
         measure = block.replace("measure=",'')
+        print(block)
+        print(measure)
     if "zeta" in block:
         zeta = block.replace("zeta=",'')
     if "beta" in block:
         beta = block.replace("beta=",'')
-measure = filename.split('_')[-2].split('=')[-1]
-zeta = filename.split('_')[-1].split('=')[-1][:-7]
+
 infile = open(filename,'rb')
 outfile =  pickle.load(infile,  encoding='bytes')
 infile.close()
@@ -96,7 +96,7 @@ for process in processing:
                 continue
             for i, layer in enumerate(metric):
                 plt.plot(layer, c=[i/length, 0, (length-i)/length,1-np.abs((1/(1.5*3.141592))*np.arctan(3*(i-length/2)/length))])
-            plt.title(layer_type+" "+ process+" "+ metrics[x]+ " trained on " + measure+ zeta)
+            plt.title(layer_type+" "+ process+" "+ metrics[x]+ " trained on " + measure+ zeta+beta)
             plt.ylabel(metrics[x])
             plt.xlabel("Epoch")
             plt.savefig('measureplots/' + model +'_'+layer_type+'_'+measure+'-'.join(zeta.split('.'))+'-'.join(beta.split('.'))+"_"+process+"-"+str(x)+".png")
