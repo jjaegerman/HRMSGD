@@ -60,6 +60,8 @@ class HRMSGD(Optimizer):
         self.beta = beta
         self.metrics = metrics = Metrics(params=listed_params, MAX=MAX, S=S, measure=measure)
         self.lr_vector = np.repeat(a=lr, repeats=len(metrics.params))
+        self.velocity = np.zeros(len(metrics.params))
+        self.prevMeasures = np.zeros(len(metrics.params))
         self.step_size = step_size
         self.gamma = gamma
         self.ready = ready
@@ -86,7 +88,11 @@ class HRMSGD(Optimizer):
                 if self.not_ready:
                     self.lr_vector[i] = self.lr_vector[i]
                 else:
-                    self.lr_vector[i] = np.maximum(self.beta*self.lr_vector[i] + self.zeta*(1-self.beta)*measures[i],1e-10)
+                    measure = measures[i]
+                    velocity[i] = measure - self.prevMeasure[i]
+                    self.prevMeasure[i] = measure
+                    self.velocity[i] = np.maximum(self.beta*self.velocity[i] + self.zeta*velocity[i],1e-10) #separate in case we want to implement a step size
+                    self.lr_vector[i] = self.velocity[i]
 
     def epoch_update(self, epoch):
         if(epoch==5):
